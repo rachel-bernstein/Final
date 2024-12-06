@@ -1,0 +1,741 @@
+---
+title: "Looking to the Past: Projecting Future Climate in the U.S. Southwest"
+author: "Rachel Bernstein"
+date: "`r Sys.Date()`"
+output: html_document
+editor_options:
+  markdown:
+    wrap: 72
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE)
+
+# setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
+
+source("setup.R")
+```
+
+## The U.S. Southwest in Climate Models
+
+As the impacts of global climate change become increasingly evident,
+it's increasingly important to improve our understanding of what future
+climate may look like. Models today generally uphold the “wet gets
+wetter, dry gets drier” theorem and forecast increasingly arid and
+expansive subtropical bands, including in the U.S. Southwest. Much of
+the drying of the Southwest in models arises from exceptional predicted
+land surface warming. Though a warmer atmosphere will hold more
+moisture, models predict that increases in evapotranspiration will
+outpace any increase in precipitation.
+
+During times of past warmth and corresponding high CO~2~, however, the
+geologic record in the Southwest shows a much wetter climate. Regional
+Pliocene records show evidence of a much wetter Southwest amidst a 400
+ppm CO~2~ climate. Due to even higher atmospheric CO~2~ and
+temperatures, the Miocene may provide a more useful tool for comparison
+with end-of-century warming projections. Understanding how and why the
+regional geologic record and model predictions are misaligned is
+critical in providing policymakers and the public with the information
+necessary to prepare for future climate-driven impacts.
+
+## What is Paleoclimate?
+
+Paleoclimatology is the reconstruction of past climate based on the
+geologic record. Paleoclimatologists use proxy archives, natural
+phenomena with established relationships to climate, to reconstruct past
+climates. An example of a proxy archive that's easy to visualize is a
+tree ring. Tree rings vary in thickness depending upon climatic
+conditions, such as water availability and temperature, during the year
+in which the ring was formed. When looking at a tree, then, you can make
+inferences about how much rain the region in which the tree grew during
+a certain year depending upon how thick or thin the corresponding tree
+ring is. Of course, in this example, your precipitation record could
+only extend back for as long as the tree was alive. To reconstruct
+climatic conditions during geologic epochs long past, geologists often
+perform stable isotope analysis on various forms of carbonate.
+
+## Carbonates and Isotopes
+
+Carbonates form by precipitation out of some source solution. In the
+ocean, this source solution is the ocean itself. In soil, this source
+solution is meteoric water, or precipitation. As water leaches through
+soil, carbonate precipitates out and fills in any gaps present. This can
+take many forms, including small nodules:
+
+![](www/nodule.jpeg){width="600"}
+
+Just like tree ring thickness, the isotopic composition of a carbonate
+is dependent upon regional climate. Global ice volume and global
+temperatures affect the isotopic composition of carbonates in the ocean.
+Soil carbonates are affected by regional temperature and precipitation
+seasonality. When performing stable isotope analysis, the composition of
+all carbonates are partially dependent upon the isotopic composition of
+its source solution. In reconstructing past climate using stable isotope
+analysis of soil carbonates, then, you may be able to make inferences
+about past precipitation and temperature, but the results you are seeing
+are also informed by precipitation isotopic composition.
+
+## Clumped Isotopes
+
+Carbonates (CO~3~) contain both carbon and oxygen isotopes, considered
+stable because they do not decay into other forms over time. Traditional
+stable isotope analysis calculates the ratio of ^13^C to ^12^C and ^18^O
+to ^16^O in a sample and compares it to the ratio found in a known
+standard. ^13^C and ^18^O each weigh slightly more than their lighter
+counterparts. This difference in weight leads to preferential selection
+of isotopes in certain processes like evaporation and precipitation. A
+lighter isotope is easier to evaporate while a heavier isotope is easier
+to rain out. Because of these preferences, inferences can be made about
+climatic conditions from stable isotope analysis.However, as mentioned
+above, the isotopic composition of a carbonate is also influenced by the
+isotopic composition of its source solution.
+
+Clumped isotopes refer to a carbonate molecule that contains both a
+^13^C and ^18^O (^13^C^18^O^16^O~2~). The formation of these molecules
+is solely temperature-dependent - groups on the righthand side of the
+equation below are preferentially formed at lower temperatures and D~47~
+CO~2~ produced during carbonate dissolution will indicate the
+carbonate’s proportion of ^13^C^18^O^16^O~2~:
+
+^12^C^18^O^16^O~2~^2-^ + ^13^C^16^O~3~^2-^ « ^13^C^18^O^16^O~2~^2-^ +
+^12^C^16^O~3~^2-^
+
+In analyzing clumped isotopes, it's possible to reconstruct an
+independent regional past temperature record.
+
+## Methods
+
+I will use carbonate clumped isotope thermometry to reconstruct
+Southwestern temperatures during the Miocene, beginning with the Miocene
+Climate Optimum (MCO). This period captures a major, sustained, and
+global cooling trend as observed in both benthic d^18^O records of
+carbonate and sea-surface temperature (SST) records derived from
+alkenones. The total global SST cooling is thought to be approximately
+6°C, which potentially bounds the total temperature increase predicted
+from end-of-century projections.
+
+I will use a well-dated and stratigraphically well-documented set of
+sediments preserved within the Rio Grande Rift in northern New Mexico
+and hosted within the Santa Fe Group. These sediments contain abundant
+authigenic carbonates and a nearly continuous record of sedimentation
+since the onset of the MCO (\~17 Ma) to upper Rio Grande integration in
+the latest Miocene (\~6 Ma). Below, find the average d18O value of each
+section plotted at the site at which the section is found. Note that this map does not represent the temporal variation across sites.
+
+```{r, fig.width=10, fig.height = 7.5}
+# Site Map
+
+data <- as_tibble(read.csv("bernstein_data_12.3.csv", header = T))
+
+carb <- data %>%
+  filter(no.carb == "FALSE") %>%
+  filter(reweigh0.5 == "FALSE") %>%
+  filter(Sample != "AB2 63.6") %>%
+  filter(Sample != "AB2 65.6") %>%
+  filter(Sample != "PS cong 11") %>%
+  filter(Sample != "AB2 4.1") %>%
+  filter(Sample != "PSBLM 20") %>%
+  filter(Sample != "PSBLM 24") %>%
+  filter(Sample != "AB 41.3") %>%
+  filter(Sample != "AB 8.5") %>%
+  distinct(Sample, .keep_all = TRUE) %>% 
+  mutate(
+    plot_d18O = if_else(is.na(Average.d18O), d18O, Average.d18O),
+    plot_d13C = if_else(is.na(Average.d13C), d13C, Average.d13C),
+  ) %>%
+  group_by(Section) %>%
+  mutate(
+    section_d18O = mean(plot_d18O),
+    section_d13C = mean(plot_d13C)
+  ) %>%
+  group_by(Site.Section) %>%
+  mutate(
+    site_lat = mean(Section.Lat),
+    site_long = mean(Section.Long)
+  ) %>%
+  mutate(
+    site_d18O = mean(section_d18O),
+    site_d13C = mean(section_d13C)
+  )
+
+# Site Data
+sites <- carb %>% 
+  select(c(site_lat, site_long, site_d18O, site_d13C, Site.Section)) %>% 
+  group_by(Site.Section) %>% 
+  distinct() %>% 
+  drop_na()
+
+# City Data
+name <- c("Albuquerque", "Santa Fe")
+lat <- c("35.0844", "35.6870")
+long <- c("-106.6504", "-105.9378")
+
+# City DF
+cities <- tibble(name, lat, long)
+i <- c(2, 3)
+cities[, i] <- apply(cities[, i], 2, function(x) as.numeric(as.character(x)))
+
+
+topo <- rast("NM topo.asc")
+
+ncl.topocol <- as_tibble(read.csv(file = "Topography Colors.csv", header=T))
+
+ncl.topocol.vec <- numeric(length=nrow(ncl.topocol))
+for (i in 1:length(ncl.topocol.vec)){
+  ncl.topocol.vec[i] <- rgb(ncl.topocol[i,1],ncl.topocol[i,2],ncl.topocol[i,3],max=255)
+}
+# ncl.topocol.vec
+land.pal <- colorRampPalette(ncl.topocol.vec)
+
+state.data <- map_data("state") %>% filter(region == "new mexico")
+state.borders <- vect(x = cbind(state.data$long, state.data$lat),
+                      crs = "WGS84",
+                      type = "lines")
+
+
+# site.points <- vect(
+#   x = sites,
+#   geom = c("Section.Long", "Section.Lat"),
+#   crs = "WGS84",
+# )
+
+# city.points <- vect(
+#   x = cities,
+#   geom = c("long", "lat"), 
+#   crs = "WGS84"
+# )
+
+NM_map <- ggplot() +
+  # ELEVATION
+  geom_spatraster(data = topo) +
+  geom_spatvector(data = state.borders) +
+  scale_fill_gradientn(
+    name = "Elevation (m)",
+    colors = land.pal(n = 254),
+    limits = c(1000, 3500),
+    labels = seq(1000, 3500, 500),
+    oob = squish,
+    guide = guide_colourbar(barheight = 15)
+  )  +
+  # NEW SCALE
+  new_scale_fill() +
+  # SITE DATA
+  geom_point(data = sites, aes(x = site_long, y = site_lat, fill = site_d18O), position = "jitter",
+             size = 5, shape = 23) +
+  scale_fill_continuous(name = expression(paste(delta^18, "O ‰")), guide = guide_colourbar(barheight = 15)) +
+  # CITIES 
+  geom_point(data = cities, aes(x = long, y = lat), size = 3) +
+  # LABELS
+  geom_label_repel(data = sites, aes(x = site_long, y = site_lat, label = Site.Section), nudge_x = -0.15, nudge_y = -0.1, label.padding = 0.12, arrow = NULL ) +
+  geom_text_repel(data = cities, aes(x = long, y = lat, label = name), nudge_x = 0.6, nudge_y = -0.05) +
+  # THEMING
+  theme_linedraw() +
+  theme(
+    axis.title.x=element_blank(),
+    axis.title.y=element_blank(),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(), 
+    panel.border = element_rect(colour = "black", fill=NA),
+    legend.direction = "vertical", 
+    legend.box = "horizontal"
+  ) +
+  scale_x_continuous(limits = c(-108.01, -103.99), expand = c(0, 0), breaks = -108:-104) +
+  scale_y_continuous(limits = c(32.9, 39.01), expand = c(0, 0))
+
+NM_map
+```
+
+<!-- ![](www/NMtopo.jpg){width="600"} -->
+
+After analyzing for stable isotopes, I will select approximately 20
+samples representative spatially and temporally across the Neogene and
+analyze for clumped isotopes at CU Boulder.
+
+## Hypotheses
+
+Given the evolution of global climate during this period, I hypothesize
+that Southwestern temperatures will mirror the evolution of global
+temperature trends (solid line in Fig. 1 below) but be more pronounced
+given the expected greater sensitivity of land surface temperatures to
+warming. This hypothesis posits that Southwestern temperature is
+particularly sensitive to CO­~2~ forcing and that any large changes
+observed in Miocene hydroclimate must contend with potentially
+substantially higher temperatures. This hypothesis is supported by the
+rare plant fossils that have been found in the northern Rio Grande Rift
+during the mid-Miocene, including a palm frond that suggests year-round
+above-freezing conditions \~ 15 Ma.
+
+Alternatively, clumped isotopes are particularly sensitive to the timing
+of carbonate formation. Today, northern New Mexico experiences a two
+wet-season climate with summer-time precipitation delivered from the
+Gulf of Mexico via the North American monsoon and winter-time
+precipitation sourced from the eastern Pacific and delivered by the
+Westerlies. The precise establishment of this hydroclimate regime is
+poorly constrained; however, some work has posited that the North
+American Monsoon may have been largely inactive prior to the opening and
+flooding of the Gulf of California. Because carbonate formation is
+sensitive to the timing of precipitation, I propose an alternative
+hypothesis where Southwestern temperatures will reach a minimum and then
+increase once the monsoon starts to deliver substantial precipitation
+(dashed line in Fig. 1), indicating a control based on precipitation
+seasonality.
+
+```{r, fig.width = 8.5}
+data <- tibble(read.csv("nsf/Figure Data.csv"))
+smooth <- data %>%
+  filter(Site == "Hyp 1" | Site == "Hyp 2")
+
+data_clean <- tibble(read.csv("nsf/Herbert Data.csv"))
+
+benthic <- tibble(read.csv("nsf/westerhold benthic data.csv")) %>%
+  filter(Age <= 17) %>%
+  mutate(absolutevalue = if_else(Benthic.d18O*5 >= 16.62185, 16.62185 - (Benthic.d18O*5 - 16.62185), 16.62185 + (16.62185 - Benthic.d18O*5)))
+
+reverse_scale <- function(x) {
+  max(x) + min(x) - x
+}
+coeff <- 5
+
+ggplot() +
+  geom_point(data = data, aes(x = Age, y = Temp)) +
+  geom_line(data = benthic, aes(x = Age, y = absolutevalue)) +
+  geom_smooth(data = smooth, aes(x = Age, y = Temp, linetype = Source), se = FALSE, linewidth = 3) +
+  labs(
+       caption = str_wrap("ODP 1010 and ODP 1021 point SST data (6). Benthic δ18O data (2). Hypothesized data is not real data.", width = 50),
+       x = "Age (Ma)",
+       y = "Temperature (°C)") +
+  scale_x_continuous(limits = c(0, 17)) + scale_y_continuous(breaks = c(5, 10, 15, 20, 25), sec.axis = sec_axis(~ reverse_scale(./5), name = expression(paste(delta^18, "O ‰")))) +
+  theme_bw() +theme(
+    legend.title = element_blank(),
+    legend.position = "bottom",
+    axis.title = element_text(size = 18),
+    # legend.text = (element_text(size = 14)),
+    plot.title = element_text(hjust = 0.5, size = 16),
+    plot.caption = element_text(size = 12),
+    axis.text = element_text(size = 14),
+  ) +
+    guides(fill = guide_legend(keywidth = 2, label.theme = element_text(size = 20)))
+
+
+```
+
+<!-- ![](www/Figure.png){width="600"} -->
+
+## Preliminary Results
+
+To interpret the preliminary d18O results, which are a ratio of ^18^O to
+^16^O, I assigned a bulk age to each section where samples were
+collected.
+
+```{r, fig.width = 9.5, fig.height = 7}
+# Bulk d18O
+
+# Setup
+
+data <- as_tibble(read.csv("bernstein_data_12.3.csv", header = T))
+
+carb <- data %>%
+  filter(no.carb == "FALSE") %>%
+  filter(reweigh0.5 == "FALSE") %>%
+  filter(Sample != "AB2 63.6") %>%
+  filter(Sample != "AB2 65.6") %>%
+  filter(Sample != "PS cong 11") %>%
+  filter(Sample != "AB2 4.1") %>%
+  filter(Sample != "PSBLM 20") %>%
+  filter(Sample != "PSBLM 24") %>%
+  filter(Sample != "AB 41.3") %>%
+  filter(Sample != "AB 8.5") %>%
+  distinct(Sample, .keep_all = TRUE) %>% 
+  mutate(
+    plot_d18O = if_else(is.na(Average.d18O), d18O, Average.d18O),
+    plot_d13C = if_else(is.na(Average.d13C), d13C, Average.d13C),
+  ) %>%
+  group_by(Section) %>%
+  mutate(
+    section_d18O = mean(plot_d18O),
+    section_d13C = mean(plot_d13C)
+  ) %>%
+  group_by(Site.Section) %>%
+  mutate(
+    site_lat = mean(Section.Lat),
+    site_long = mean(Section.Long)
+  ) %>%
+  mutate(
+    site_d18O = mean(section_d18O),
+    site_d13C = mean(section_d13C)
+  )
+
+# Plot
+
+ggplot(carb, aes(x = plot_d18O, y = Bulk.Age)) +
+  geom_point(aes(color = Section)) +
+  geom_smooth(orientation = "y", se = F) +
+  theme_bw() +
+  scale_y_reverse() +
+  labs(
+    x = expression(paste(delta^18, "O ‰")), 
+    y = "Bulk Age (Ma)")
+```
+
+<!-- ![](www/bulk-age.jpg){width="600"} -->
+
+I also plotted each sample's d18O by section and relative stratigraphic
+height, which correlates to age within each section (where older
+sediments are at the bottom of a section and younger sediments are at
+the top).
+
+```{r, fig.width = 8.5}
+# Faceted
+carb %>%
+  filter(Section %in% c("4S", "AB", "AB2", "BM", "KP", "SEZ", "SEZe", "WAC", "WW", "CH", "LL19")) %>%
+  ggplot() +
+  geom_point(aes(x = plot_d18O, y = Strat.Height)) +
+  facet_wrap(~Section, scales = "free_y") +
+  theme_bw() +
+  labs(x = expression(paste(delta^18, "O ‰")), y = "Stratigraphic Height (m)")
+```
+
+<!-- ![](www/full-data.jpg){width="600"} -->
+
+Subsequently, I plotted each section alone - combining sections which
+were collected on different days from the same area.
+
+```{r}
+SEZ <- carb %>%
+  filter(Section == "SEZ" | Section == "SEZe")
+
+AB <- carb %>%
+  filter(Section == "AB" | Section == "AB2" | Section == "4S")
+
+PS <-  carb %>%
+  filter(Section == "PS" | Section == "PSBLM")
+
+BM <- carb %>%
+  filter(Section == "BM")
+
+KP <- carb %>%
+  filter(Section == "KP")
+
+WAC <- carb %>%
+  filter(Section == "WAC")
+
+WW <- carb %>%
+  filter(Section == "WW")
+
+LL19 <- carb %>%
+  filter(Section == "LL19")
+
+CH <- carb %>%
+  filter(Section == "CH")
+
+```
+
+```{r, fig.width=3}
+# AB/AB2/4S plotted together
+ABp <- ggplot(AB) +
+  geom_point(aes(x = plot_d18O, y = Strat.Height.Adjusted, color = Section)) +
+  geom_smooth(aes(x = plot_d18O, y = Strat.Height.Adjusted), orientation = "y", se = FALSE) +
+  scale_color_manual(values = c("darkblue", "lightblue", "purple")) +
+  theme_bw() +
+  labs(x = expression(paste(delta^18, "O ‰")), 
+       y = "Stratigraphic Height (m)") +
+   theme(legend.position = "bottom",
+        legend.text = element_text(size = 6))
+# outliers - AB 32.7, AB 33.0
+```
+
+```{r, fig.width=2.5}
+# SEZ/SEZe plotted together
+SEZp <- ggplot(SEZ) +
+  geom_point(aes(x = plot_d18O, y = Strat.Height.Adjusted, color = Section)) +
+  geom_smooth(aes(x = plot_d18O, y = Strat.Height.Adjusted), orientation = "y", se = FALSE) +
+  scale_color_manual(values = c("darkblue", "lightblue", "purple")) +
+  theme_bw() +
+  labs(x = expression(paste(delta^18, "O ‰")), 
+       y = "Stratigraphic Height (m)") +
+    theme(axis.title.y = element_blank(),
+        legend.position = "bottom",
+        legend.text = element_text(size = 6))
+# outliers - SEZ 2.0, SEZ 19.3, SEZ 34.8, SEZ 70.3, SEZ 71.2, SEZ 74.9, maybe SEZ 1.7a and 1.7b
+```
+
+```{r, fig.width=2.5}
+# KP plot
+KPp <- ggplot(KP) +
+  geom_point(aes(x = plot_d18O, y = Strat.Height.Adjusted, color = Section)) +
+  geom_smooth(aes(x = plot_d18O, y = Strat.Height.Adjusted), orientation = "y", se = FALSE) +
+  theme_bw() +
+  labs(x = expression(paste(delta^18, "O ‰")), 
+       y = "Stratigraphic Height (m)") +
+  scale_color_manual(values = "darkblue") +
+   theme(axis.title.y = element_blank(),
+        legend.position = "bottom",
+        legend.text = element_text(size = 6))
+# outliers...? not sure what to make of this data; KP3a, KP8a for sure
+```
+
+```{r, fig.width=2.5}
+# BM plot
+BMp <- ggplot(BM) +
+  geom_point(aes(x = plot_d18O, y = Strat.Height.Adjusted, color = Section)) +
+  geom_smooth(aes(x = plot_d18O, y = Strat.Height.Adjusted), orientation = "y", se = FALSE) +
+  theme_bw() +
+  labs(x = expression(paste(delta^18, "O ‰")), 
+       y = "Stratigraphic Height (m)") +
+  scale_color_manual(values = "darkblue") +
+  theme(axis.title.y = element_blank(),
+        legend.position = "bottom",
+        legend.text = element_text(size = 6))
+# outliers - BM 9.8, BM veins 25-28, BM 29.3, BM 40.4a, BM 40.4b, BM 40.4c, BM 52a
+# hard to tell above strat height 30 because fewer data points
+```
+
+```{r}
+CHp <- ggplot(CH) +
+  geom_point(aes(x = plot_d18O, y = Strat.Height, color = Section)) +
+  geom_smooth(aes(x = plot_d18O, y = Strat.Height), orientation = "y", se = FALSE) +
+  theme_bw() +
+  labs(x = expression(paste(delta^18, "O ‰")), 
+       y = "Stratigraphic Height (m)") +
+  scale_color_manual(values = "darkblue") +
+  theme(
+        legend.position = "bottom",
+        legend.text = element_text(size = 6))
+```
+
+```{r}
+LLp <- ggplot(LL19) +
+  geom_point(aes(x = plot_d18O, y = Strat.Height, color = Section)) +
+  geom_smooth(aes(x = plot_d18O, y = Strat.Height), orientation = "y", se = FALSE) +
+  theme_bw() +
+  labs(x = expression(paste(delta^18, "O ‰")), 
+       y = "Stratigraphic Height (m)") +
+  scale_color_manual(values = "darkblue") +
+  theme(axis.title.y = element_blank(),
+        legend.position = "bottom",
+        legend.text = element_text(size = 6))
+```
+
+```{r}
+WWp <- ggplot(WW) +
+  geom_point(aes(x = plot_d18O, y = Strat.Height, color = Section)) +
+  geom_smooth(aes(x = plot_d18O, y = Strat.Height), orientation = "y", se = FALSE) +
+  theme_bw() +
+  labs(x = expression(paste(delta^18, "O ‰")), 
+       y = "Stratigraphic Height (m)") +
+  scale_color_manual(values = "darkblue") +
+  theme(axis.title.y = element_blank(),
+        legend.position = "bottom",
+        legend.text = element_text(size = 6))
+```
+
+```{r}
+WACp <- ggplot(WAC) +
+  geom_point(aes(x = plot_d18O, y = Strat.Height, color = Section)) +
+  geom_smooth(aes(x = plot_d18O, y = Strat.Height), orientation = "y", se = FALSE) +
+  theme_bw() +
+  labs(x = expression(paste(delta^18, "O ‰")), 
+       y = "Stratigraphic Height (m)") +
+  scale_color_manual(values = "darkblue") +
+  theme(axis.title.y = element_blank(),
+        legend.position = "bottom",
+        legend.text = element_text(size = 6))
+```
+
+
+```{r, fig.width = 8.5, fig.height = 7}
+ggarrange(ABp, SEZp, BMp, KPp, CHp, LLp, WWp, WACp,
+          ncol = 4,
+          nrow = 2,
+          widths = c(1.45, 1.3, 1.3, 1.3))
+```
+
+<!-- ![](www/AB.jpg){width="165"} ![](www/SEZ.jpg){width="165"} -->
+
+<!-- ![](www/KP.jpg){width="165"} ![](www/BM.jpg){width="165"} -->
+
+Finally, I plotted all samples' d13C values (a ratio of ^13^C to ^12^C)
+relative to Bulk Age and then against d18O.
+
+```{r, fig.width = 9.5, fig.height = 7}
+# Bulk d13C
+ggplot(carb, aes(x = plot_d13C, y = Bulk.Age)) +
+  geom_point(aes(color = Section)) +
+  geom_smooth(orientation = "y", se = F) +
+  theme_bw() +
+  scale_y_reverse() +
+  labs(
+    x = expression(paste(delta^13, "C ‰")), 
+    y = "Bulk Age (Ma)")
+```
+
+```{r, fig.width = 9.5, fig.height = 7}
+# d18O v. d13C
+ggplot(carb, aes(x = plot_d13C, y = plot_d18O)) +
+  geom_point(aes(color = Section)) +
+  theme_bw() +
+  labs(
+    x = expression(paste(delta^13, "C ‰")),
+    y = expression(paste(delta^18, "O ‰"))
+  )
+```
+
+## Preliminary Interpretations
+
+The key element about isotopes that I am using to interpret my data is
+the preferential selection of heavier vs. lighter isotopes in natural
+processes like evaporation and raining out. Since we are looking at
+terrestrial data, all of these carbonates precipitated from rain water.
+Today, New Mexico and the U.S. Southwest are part of a two-wet season
+hydroclimate. In essence, in the winter, precipitation is driven by the
+Westerlies from the eastern Pacific across the Rockies to the Southwest.
+In the summer, the North American Monsoon drives moisture from the Gulf
+of Mexico northwards across the plains to the Southwest.
+
+Winter precipitation has to cross the Rockies, which forces a lot of
+precipitation to rain out before reaching the lee side of the mountains.
+Since ^18^O rains out slightly more easily than ^16^O, the remaining
+precipitation that falls in northern New Mexico is lower in d18O than
+summer precipitation, which only travels across the plains and is
+therefore relatively higher in d18O. We can therefore interpret lower
+d18O values as a relatively winter-wet climate and higher d18O as a
+relatively summer-wet climate.
+
+Looking at our Bulk Age vs. d18O plot again, we see a stable trend until
+around 14 Ma, when d18O begins to fall. This fall continues until around
+9 Ma, when d18O begins to strongly increase. The data then seems to shift back towards lower d18O around 3 Ma - but this could be due to low outliers.
+
+```{r, fig.width = 9.5, fig.height = 7}
+# Bulk d18O
+ggplot(carb, aes(x = plot_d18O, y = Bulk.Age)) +
+  geom_point(aes(color = Section)) +
+  geom_smooth(orientation = "y", se = F) +
+  theme_bw() +
+  scale_y_reverse() +
+  labs(
+    x = expression(paste(delta^18, "O ‰")), 
+    y = "Bulk Age (Ma)")
+```
+
+The range of d18O change in some sections is significantly larger than
+others, however. In the SEZ section, the range is approximately 12 per mil. In
+the BM section, the range is about 8 per mil. In comparison, AB, AB2,
+and 4S, which are all part of the same site, only range about 3.5 per
+mil across the entire site.
+
+Some Pliocene (earlier than 5 Ma) data is also from the same area as AB, AB2, and 4S. To create a trend spanning both the Miocene and Pliocene in the same geographic region (nearby Albuquerque), I stacked these sections atop each other - with approximately 100m stratigraphic gaps denoting gaps in time between the data.
+
+```{r, fig.width = 10, fig.height = 7}
+colors <- c("#F8766D", "#E68613", "#CD9600", "#C77Cff", "#ED68ED", "#FF61CC")
+
+alb <- carb %>%
+  filter(Section %in% c("4S", "AB", "AB2", "SEZ", "SEZe", "WAC"))
+
+ggplot(alb, aes(x = plot_d18O, y = Master.Strat)) +
+  geom_point(aes(color = Section)) +
+  geom_smooth(orientation = "y", se = F) +
+  theme_bw() +
+  scale_y_continuous(breaks = c(0, 200, 400, 600),
+                     sec.axis = sec_axis(~ rev(./41),
+                     name = "Age (Ma)")) +
+  labs(
+    x = expression(paste(delta^18, "O ‰")),
+    y = "Stratigraphic Height (m)"
+  ) +
+  scale_color_manual(values = colors)
+```
+
+
+And, compared with the bulk age plot:
+
+```{r, fig.width = 9.5}
+colors <- c("#F8766D", "#E68613", "#CD9600", "#C77Cff", "#ED68ED", "#FF61CC")
+
+masterstrat <- ggplot(alb, aes(x = plot_d18O, y = Master.Strat)) +
+  geom_point(aes(color = Section)) +
+  geom_smooth(orientation = "y", se = F) +
+  theme_bw() +
+  labs(
+    x = expression(paste(delta^18, "O ‰")),
+    y = "Stratigraphic Height (m)"
+  ) +
+  theme(
+    legend.position = "none"
+  ) +
+  scale_color_manual(values = colors)
+
+
+bulkd18O <- ggplot(carb, aes(x = plot_d18O, y = Bulk.Age)) +
+  geom_point(aes(color = Section)) +
+  geom_smooth(orientation = "y", se = F) +
+  theme_bw() +
+  scale_y_reverse() +
+  labs(
+    x = expression(paste(delta^18, "O ‰")), 
+    y = "Bulk Age (Ma)")
+
+ggarrange(masterstrat, bulkd18O,
+          nrow = 1,
+          ncol = 2,
+          widths = c(1.3, 1.6)
+          )
+```
+
+This comparison is interesting because around 10 Ma (approximately, since the 100m gaps to indicate missing time are somewhat arbitrary), the Albuquerque data seems to imply a shift towards a summer-wet climate while the broader trend is clearly shifting towards a winter-wet climate.
+
+Our outliers are generally also relatively higher in d18O (with the exception of a couple really low outliers in the WAC data). This could potentially
+drive some of that late trend by dragging the overall trend towards
+higher d18O. However, one thing to keep in mind is that there
+is still an age range within each section. It's possible that there are
+strong trends within a section itself that are not expressed by
+assigning a bulk age.
+
+An interesting factor to consider as well is that our d13C and d18O
+trends are highly correlated. Oftentimes, this is seen in evaporative environments, since evaporation prefers both ^12^C and ^16^O to ^13^C and ^18^O, respectively. These are not evaporative environments, however. One way to interpret this correlation is because of the increase in productivity in Western ecosystems in winter-wet climates. Summer precipitation is quickly transpired by plants - winter precipitation is able to recharge groundwater, ultimately leading to more productive environments. Since lower d13C is correlated to higher primary productivity and lower d18O is correlated to increases in the share of winter precipitation, this explains the correlation present in the data.
+
+```{r, fig.width = 9.5}
+# d13C and d18O
+bulkd18O <- ggplot(carb, aes(x = plot_d18O, y = Bulk.Age)) +
+  geom_point(aes(color = Section)) +
+  geom_smooth(orientation = "y", se = F) +
+  theme_bw() +
+  scale_y_reverse() +
+  labs(
+    x = expression(paste(delta^18, "O ‰")), 
+    y = "Bulk Age (Ma)") +
+  theme(
+    axis.title.y = element_blank()
+  )
+
+bulkd13C <- ggplot(carb, aes(x = plot_d13C, y = Bulk.Age)) +
+  geom_point(aes(color = Section)) +
+  geom_smooth(orientation = "y", se = F) +
+  theme_bw() +
+  scale_y_reverse() +
+  labs(
+    x = expression(paste(delta^13, "C ‰")), 
+    y = "Bulk Age (Ma)") +
+  theme(
+    legend.position = "none"
+  )
+
+ggarrange(bulkd13C, bulkd18O, 
+          ncol = 2,
+          nrow = 1.5,
+          widths = c(1.3, 1.6))
+```
+
+In all, preliminary data shows a slight decrease in d18O from 17 Ma to 9
+Ma, when d18O begins to increase strongly until 5 Ma. This implies a
+slight shift towards majority winter precipitation until 10 Ma, when a
+strong shift towards summer precipitation begins. This shift lasts until around 6 Ma, when the trend falls back towards winter-wet. However, this later trend is likely significantly affected by the low outliers in the WAC data.
+
+Some work thus far has
+posited that the North American Monsoon came into effect for the first
+time during the Miocene with the opening of the Gulf of California
+around 6.4 Ma (Chapin 2008, Oskin and Stock 2003). One way to build upon this preliminary data is to collect more late Miocene and Pliocene data to increase the resolution around this timeframe.
+
+The Miocene is also particularly interesting in temperature trends because it
+contains both the MCO and the Mid-Miocene Climate Transition (MMCT).
+After running samples for clumped isotopes in the spring, I will
+reconstruct a temperature record to compare with this stable isotope data.
